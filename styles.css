@@ -1,9 +1,13 @@
 .container {
     display: flex;
     flex-wrap: wrap;
+    width: 80vw;
+    height: 80vh;
+    margin-top: 10vh;
+    margin-left: 10vw;
 }
 
 .chest {
-    /* max-width: 250px; */
+    max-width: 750px;
     height: auto;
 }

@@ -5,14 +5,25 @@ const noise = new Howl({src: "./sounds/noise.wav", loop: true});
 const container = document.body.querySelector(".container");
 const imageSources = [
     "./images/test.JPG",
+    "./images/test.JPG",
+    "./images/test.JPG",
+    "./images/test.JPG",
+    "./images/test.JPG",
+    "./images/test.JPG",
     "./images/test2.jpg"
 ];
 const soundSources = [
+    "./sounds/sound1.mp3",
+    "./sounds/sound1.mp3",
+    "./sounds/sound1.mp3",
+    "./sounds/sound1.mp3",
+    "./sounds/sound1.mp3",
     "./sounds/sound1.mp3",
     "./sounds/sound1.mp3"
 ];
 const imageElems = [];
 const NUM_ELEMS = imageSources.length;
+let curMem = undefined;
 
 async function initializeBlobs() {
     await imageElems.forEach(async (memory) => {
@@ -46,22 +57,31 @@ async function initializeElems() {
     console.log(imageElems);
 }
 
+function stopMemory(memory){
+    memory.active = false;
+    memory.sound.stop();
+    noise.stop();
+    compressImg(memory);
+    memory.compressLevel = Math.max(0, memory.compressLevel - COMPRESS_CHANGE);
+    memory.noiseVolume = Math.min(1, memory.noiseVolume + NOISE_VOLUME_CHANGE);
+    memory.elem.src = CHEST_URL;
+}
+
 function openMemory(i) {
     let memory = imageElems[i];
     if(!memory.active){
+        if(curMem){
+            stopMemory(curMem);
+        }
+        curMem = memory;
         noise.volume(memory.noiseVolume);
         memory.elem.src = memory.memorySrc;
         memory.sound.play();
         noise.play();
+        memory.active = true;
     } else {
-        compressImg(memory);
-        memory.compressLevel = Math.max(0, memory.compressLevel - COMPRESS_CHANGE);
-        memory.noiseVolume = Math.min(1, memory.noiseVolume + NOISE_VOLUME_CHANGE);
-        memory.elem.src = CHEST_URL;
-        memory.sound.stop();
-        noise.stop();
+        stopMemory(memory);
     }
-    memory.active = !memory.active;
 }
 
 function compressImg(memory) {
