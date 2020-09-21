@@ -1,5 +1,7 @@
 const CHEST_URL = "./images/chest.png";
-const COMPRESS_LEVEL = 0;
+const COMPRESS_CHANGE = 0.05;
+const NOISE_VOLUME_CHANGE = 0.25;
+const noise = new Howl({src: "./sounds/noise.wav", loop: true});
 const container = document.body.querySelector(".container");
 const imageSources = [
     "./images/test.JPG",
@@ -7,7 +9,7 @@ const imageSources = [
 ];
 const soundSources = [
     "./sounds/sound1.mp3",
-    "./sounds/sound2.mp3"
+    "./sounds/sound1.mp3"
 ];
 const imageElems = [];
 const NUM_ELEMS = imageSources.length;
@@ -36,6 +38,7 @@ async function initializeElems() {
             blob: undefined,
             active: false,
             sound: memSound,
+            noiseVolume: 0,
             compressLevel: 0.1
         });
     }
@@ -46,13 +49,17 @@ async function initializeElems() {
 function openMemory(i) {
     let memory = imageElems[i];
     if(!memory.active){
+        noise.volume(memory.noiseVolume);
         memory.elem.src = memory.memorySrc;
         memory.sound.play();
+        noise.play();
     } else {
         compressImg(memory);
-        memory.compressLevel = Math.max(0, memory.compressLevel - 0.05);
+        memory.compressLevel = Math.max(0, memory.compressLevel - COMPRESS_CHANGE);
+        memory.noiseVolume = Math.min(1, memory.noiseVolume + NOISE_VOLUME_CHANGE);
         memory.elem.src = CHEST_URL;
         memory.sound.stop();
+        noise.stop();
     }
     memory.active = !memory.active;
 }
