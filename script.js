@@ -1,25 +1,34 @@
-const CHEST_URL = "./images/chest.png";
+const CHEST_URL = "https://res.cloudinary.com/dw3ipuew9/image/upload/v1600798655/art%20173/proj1image/chest_lwyure.png";
 const COMPRESS_CHANGE = 0.05;
-const NOISE_VOLUME_CHANGE = 0.25;
-const noise = new Howl({src: "./sounds/noise.wav", loop: true});
+const NOISE_VOLUME_CHANGE = 0.15;
+const MEM_VOLUME_CHANGE = 0.12;
+const DISTORT_LEVEL = 400;
+const noise = new Howl({ src: "https://res.cloudinary.com/dw3ipuew9/video/upload/v1600795651/art%20173/proj1sound/noise_zmj80z.wav", loop: true, preload: true });
+const ambience = new Howl({ src: "https://res.cloudinary.com/dw3ipuew9/video/upload/v1600842259/art%20173/proj1sound/ambience_hc8qmb.m4a", loop: true, preload: true });
 const container = document.body.querySelector(".container");
 const imageSources = [
-    "./images/test.JPG",
-    "./images/test.JPG",
-    "./images/test.JPG",
-    "./images/test.JPG",
-    "./images/test.JPG",
-    "./images/test.JPG",
-    "./images/test2.jpg"
+    "https://res.cloudinary.com/dw3ipuew9/image/upload/v1600799345/art%20173/proj1image/0_j2lzar.jpg",
+    "https://res.cloudinary.com/dw3ipuew9/image/upload/v1600798674/art%20173/proj1image/1_w4kvfu.jpg",
+    "https://res.cloudinary.com/dw3ipuew9/image/upload/v1600841939/art%20173/proj1image/2_xjsk52.jpg",
+    "https://res.cloudinary.com/dw3ipuew9/image/upload/v1600798675/art%20173/proj1image/3_jq14iv.jpg",
+    "https://res.cloudinary.com/dw3ipuew9/image/upload/v1600798665/art%20173/proj1image/4_f19epc.jpg",
+    "https://res.cloudinary.com/dw3ipuew9/image/upload/v1600798664/art%20173/proj1image/5_otd9qu.jpg",
+    "https://res.cloudinary.com/dw3ipuew9/image/upload/v1600798681/art%20173/proj1image/6_nqplc4.jpg",
+    "https://res.cloudinary.com/dw3ipuew9/image/upload/v1600798663/art%20173/proj1image/7_mby6bp.jpg",
+    "https://res.cloudinary.com/dw3ipuew9/image/upload/v1600798656/art%20173/proj1image/8_ixk9ay.jpg",
+    "https://res.cloudinary.com/dw3ipuew9/image/upload/v1600798648/art%20173/proj1image/9_yxhpld.jpg"
 ];
 const soundSources = [
-    "./sounds/sound1.mp3",
-    "./sounds/sound1.mp3",
-    "./sounds/sound1.mp3",
-    "./sounds/sound1.mp3",
-    "./sounds/sound1.mp3",
-    "./sounds/sound1.mp3",
-    "./sounds/sound1.mp3"
+    "https://res.cloudinary.com/dw3ipuew9/video/upload/v1600795633/art%20173/proj1sound/0_o2i3nd.mp3",
+    "https://res.cloudinary.com/dw3ipuew9/video/upload/v1600795645/art%20173/proj1sound/1_dhaejv.mp3",
+    "https://res.cloudinary.com/dw3ipuew9/video/upload/v1600795645/art%20173/proj1sound/2_eogxil.mp3",
+    "https://res.cloudinary.com/dw3ipuew9/video/upload/v1600795641/art%20173/proj1sound/3_ccyno8.mp3",
+    "https://res.cloudinary.com/dw3ipuew9/video/upload/v1600795624/art%20173/proj1sound/4_ouqswr.mp3",
+    "https://res.cloudinary.com/dw3ipuew9/video/upload/v1600795661/art%20173/proj1sound/5_uyvper.mp3",
+    "https://res.cloudinary.com/dw3ipuew9/video/upload/v1600798096/art%20173/proj1sound/6_xxvoue.m4a",
+    "https://res.cloudinary.com/dw3ipuew9/video/upload/v1600795628/art%20173/proj1sound/7_li08dm.mp3",
+    "https://res.cloudinary.com/dw3ipuew9/video/upload/v1600795653/art%20173/proj1sound/8_n6dtxj.mp3",
+    "https://res.cloudinary.com/dw3ipuew9/video/upload/v1600795625/art%20173/proj1sound/9_bcggvy.mp3"
 ];
 const imageElems = [];
 const NUM_ELEMS = imageSources.length;
@@ -42,7 +51,7 @@ async function initializeElems() {
         imgElem.addEventListener("click", () => { openMemory(i) });
         newElem.appendChild(imgElem);
         container.appendChild(newElem);
-        const memSound = new Howl({src: soundSources[i], loop: true});
+        const memSound = new Howl({ src: soundSources[i], loop: true, preload: true });
         imageElems.push({
             memorySrc: imageSources[i],
             elem: imgElem,
@@ -54,13 +63,16 @@ async function initializeElems() {
         });
     }
     await initializeBlobs();
+    ambience.play();
     console.log(imageElems);
 }
 
-function stopMemory(memory){
+function stopMemory(memory) {
     memory.active = false;
     memory.sound.stop();
+    memory.sound.volume(Math.max(0.1, memory.sound.volume()* (2/3)));
     noise.stop();
+    ambience.play();
     compressImg(memory);
     memory.compressLevel = Math.max(0, memory.compressLevel - COMPRESS_CHANGE);
     memory.noiseVolume = Math.min(1, memory.noiseVolume + NOISE_VOLUME_CHANGE);
@@ -69,16 +81,18 @@ function stopMemory(memory){
 
 function openMemory(i) {
     let memory = imageElems[i];
-    if(!memory.active){
-        if(curMem){
+    if (!memory.active) {
+        if (curMem) {
             stopMemory(curMem);
         }
         curMem = memory;
         noise.volume(memory.noiseVolume);
         memory.elem.src = memory.memorySrc;
+        ambience.stop();
         memory.sound.play();
         noise.play();
         memory.active = true;
+
     } else {
         stopMemory(memory);
     }
@@ -88,7 +102,7 @@ function compressImg(memory) {
     let compressor = new Compressor(memory.blob, {
         quality: memory.compressLevel,
         success(result) {
-            memory.memorySrc = URL.createObjectURL(result); 
+            memory.memorySrc = URL.createObjectURL(result);
             memory.blob = result;
         },
         error(err) {
