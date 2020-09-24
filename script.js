@@ -3,6 +3,12 @@ const COMPRESS_CHANGE = 0.05;
 const NOISE_VOLUME_CHANGE = 0.15;
 const MEM_VOLUME_CHANGE = 0.12;
 const DISTORT_LEVEL = 400;
+const MIN_OPACITY = 0.35;
+const OPACITY_CHANGE = 0.2;
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const distortion = audioCtx.createWaveShaper();
+distortion.curve = makeDistortionCurve(400);
+distortion.oversample = '4x';
 const noise = new Howl({ src: "https://res.cloudinary.com/dw3ipuew9/video/upload/v1600795651/art%20173/proj1sound/noise_zmj80z.wav", loop: true, preload: true });
 const ambience = new Howl({ src: "https://res.cloudinary.com/dw3ipuew9/video/upload/v1600842259/art%20173/proj1sound/ambience_hc8qmb.m4a", loop: true, preload: true });
 const container = document.body.querySelector(".container");
@@ -59,7 +65,8 @@ async function initializeElems() {
             active: false,
             sound: memSound,
             noiseVolume: 0,
-            compressLevel: 0.1
+            compressLevel: 0.1,
+            opacity: 1
         });
     }
     await initializeBlobs();
@@ -70,13 +77,15 @@ async function initializeElems() {
 function stopMemory(memory) {
     memory.active = false;
     memory.sound.stop();
-    memory.sound.volume(Math.max(0.1, memory.sound.volume()* (2/3)));
+    memory.sound.volume(Math.max(0.1, memory.sound.volume() * (2 / 3)));
     noise.stop();
     ambience.play();
     compressImg(memory);
     memory.compressLevel = Math.max(0, memory.compressLevel - COMPRESS_CHANGE);
     memory.noiseVolume = Math.min(1, memory.noiseVolume + NOISE_VOLUME_CHANGE);
+    memory.opacity = Math.max(MIN_OPACITY, memory.opacity - OPACITY_CHANGE);
     memory.elem.src = CHEST_URL;
+    memory.elem.style.setProperty("opacity", memory.opacity);
 }
 
 function openMemory(i) {
@@ -88,6 +97,7 @@ function openMemory(i) {
         curMem = memory;
         noise.volume(memory.noiseVolume);
         memory.elem.src = memory.memorySrc;
+        memory.elem.style.setProperty("opacity", 1);
         ambience.stop();
         memory.sound.play();
         noise.play();
@@ -99,7 +109,7 @@ function openMemory(i) {
 }
 
 function compressImg(memory) {
-    let compressor = new Compressor(memory.blob, {
+    new Compressor(memory.blob, {
         quality: memory.compressLevel,
         success(result) {
             memory.memorySrc = URL.createObjectURL(result);
@@ -110,5 +120,19 @@ function compressImg(memory) {
         },
     });
 }
+
+function makeDistortionCurve(amount) {
+    var k = typeof amount === 'number' ? amount : 50,
+        n_samples = 44100,
+        curve = new Float32Array(n_samples),
+        deg = Math.PI / 180,
+        i = 0,
+        x;
+    for (; i < n_samples; ++i) {
+        x = i * 2 / n_samples - 1;
+        curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+    }
+    return curve;
+};
 
 initializeElems();
